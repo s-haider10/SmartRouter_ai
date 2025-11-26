@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartRouter - Intelligent Search Query Routing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0b;
+            --bg-secondary: #111113;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-teal: #2dd4bf;
+            --accent-purple: #a855f7;
+            --accent-gradient: linear-gradient(135deg, #2dd4bf 0%, #a855f7 100%);
+            --glass-bg: rgba(255, 255, 255, 0.02);
+            --glass-border: rgba(255, 255, 255, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Background effects */
+        .bg-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(45, 212, 191, 0.15), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 60%, rgba(168, 85, 247, 0.1), transparent);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-cta {
+            padding: 0.625rem 1.25rem;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+        }
+
+        /* Main content */
+        main {
+            position: relative;
+            z-index: 2;
+        }
+
+        section {
+            padding: 6rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding-top: 8rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 100px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-teal);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(3rem, 8vw, 5.5rem);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 span {
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 540px;
+            margin-bottom: 3rem;
+            line-height: 1.7;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            padding: 1rem 2rem;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-secondary {
+            padding: 1rem 2rem;
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            border-color: var(--text-muted);
+        }
+
+        /* Browser Mockup */
+        .browser-mockup {
+            margin-top: 4rem;
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 20px 50px -10px rgba(0, 0, 0, 0.5),
+                0 0 100px -20px rgba(45, 212, 191, 0.2);
+        }
+
+        .browser-header {
+            padding: 0.875rem 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .browser-dots {
+            display: flex;
+            gap: 6px;
+        }
+
+        .browser-dots span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--border-color);
+        }
+
+        .browser-dots span:nth-child(1) { background: #ff5f57; }
+        .browser-dots span:nth-child(2) { background: #ffbd2e; }
+        .browser-dots span:nth-child(3) { background: #28ca41; }
+
+        .browser-url {
+            flex: 1;
+            background: var(--bg-primary);
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .browser-url svg {
+            width: 14px;
+            height: 14px;
+            opacity: 0.5;
+        }
+
+        .browser-content {
+            padding: 2rem;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 600px;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: all 0.3s ease;
+        }
+
+        .search-box.active {
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+        }
+
+        .search-box svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-muted);
+        }
+
+        .search-text {
+            font-size: 1rem;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .typing-cursor {
+            width: 2px;
+            height: 1.2em;
+            background: var(--accent-teal);
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .routing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 100px;
+            font-size: 0.875rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.4s ease;
+        }
+
+        .routing-indicator.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .routing-indicator .route-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.7rem;
+        }
+
+        .route-perplexity {
+            background: linear-gradient(135deg, #20b2aa, #1e90ff);
+            color: white;
+        }
+
+        .route-google {
+            background: white;
+            color: #333;
+        }
+
+        /* Problem Section */
+        .problem {
+            text-align: center;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-teal);
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-size: 1.125rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        .pain-points {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .pain-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .pain-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-4px);
+        }
+
+        .pain-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+            font-size: 1.5rem;
+        }
+
+        .pain-card h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .pain-card p {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            text-align: center;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-top: 4rem;
+            position: relative;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-teal), var(--accent-purple));
+            opacity: 0.3;
+        }
+
+        .step {
+            position: relative;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 2;
+            background: var(--bg-primary);
+        }
+
+        .step:nth-child(1) .step-number { border-color: var(--accent-teal); color: var(--accent-teal); }
+        .step:nth-child(2) .step-number { border-color: #8b5cf6; color: #8b5cf6; }
+        .step:nth-child(3) .step-number { border-color: var(--accent-purple); color: var(--accent-purple); }
+
+        .step h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .step p {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Features */
+        .features {
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        .feature-card h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            font-size: 0.9375rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Stats */
+        .stats {
+            text-align: center;
+            background: var(--bg-secondary);
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            padding: 4rem 2rem;
+            margin: 4rem auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .stat {
+            position: relative;
+        }
+
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(3rem, 6vw, 4.5rem);
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 0.75rem;
+        }
+
+        /* Waitlist CTA */
+        .waitlist {
+            text-align: center;
+            padding: 8rem 2rem;
+        }
+
+        .waitlist-box {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 4rem 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+            backdrop-filter: blur(20px);
+        }
+
+        .waitlist h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .waitlist p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .waitlist-form {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 440px;
+            margin: 0 auto;
+        }
+
+        .waitlist-form input {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .waitlist-form input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .waitlist-form input:focus {
+            border-color: var(--accent-teal);
+            box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.1);
+        }
+
+        .waitlist-form button {
+            padding: 1rem 1.5rem;
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .waitlist-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(45, 212, 191, 0.3);
+        }
+
+        .waitlist-form button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .form-note {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 1rem;
+        }
+
+        .success-message {
+            display: none;
+            padding: 1rem;
+            background: rgba(45, 212, 191, 0.1);
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            border-radius: 8px;
+            color: var(--accent-teal);
+            margin-top: 1rem;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+        }
+
+        .footer-team {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-team a {
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .footer-team a:hover {
+            color: var(--accent-teal);
+        }
+
+        .footer-school {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .footer-school img {
+            height: 20px;
+            vertical-align: middle;
+            margin-left: 0.5rem;
+            opacity: 0.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            section {
+                padding: 4rem 1.5rem;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .steps::before {
+                display: none;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .waitlist-form {
+                flex-direction: column;
+            }
+
+            .hero-cta {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* Scroll animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="noise"></div>
+
+    <nav>
+        <div class="nav-container">
+            <div class="logo">SmartRouter</div>
+            <button class="nav-cta" onclick="scrollToWaitlist()">Join Waitlist</button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="badge">
+                <span class="badge-dot"></span>
+                Chrome Extension Coming Soon
+            </div>
+            <h1>Stop choosing.<br><span>Start searching.</span></h1>
+            <p class="hero-subtitle">SmartRouter automatically routes your queries to the right search engine—Google for quick lookups, Perplexity for deep answers. No more mental overhead.</p>
+            <div class="hero-cta">
+                <button class="btn-primary" onclick="scrollToWaitlist()">
+                    Get Early Access
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                </button>
+                <button class="btn-secondary" onclick="scrollToHow()">How it works</button>
+            </div>
+
+            <div class="browser-mockup">
+                <div class="browser-header">
+                    <div class="browser-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="browser-url">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <path d="M12 6v6l4 2"/>
+                        </svg>
+                        <span>smartrouter</span>
+                    </div>
+                </div>
+                <div class="browser-content">
+                    <div class="search-box" id="searchBox">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"/>
+                            <path d="M21 21l-4.35-4.35"/>
+                        </svg>
+                        <span class="search-text" id="searchText"></span>
+                        <span class="typing-cursor" id="cursor"></span>
+                    </div>
+                    <div class="routing-indicator" id="routingIndicator">
+                        <span>Routing to</span>
+                        <div class="route-icon route-perplexity" id="routeIcon">P</div>
+                        <span id="routeDestination">Perplexity</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Problem Section -->
+        <section class="problem fade-in">
+            <span class="section-label">The Problem</span>
+            <h2 class="section-title">Searching shouldn't require decisions</h2>
+            <p class="section-subtitle">Every query forces a choice: Google or AI? Traditional results or synthesized answers? This friction adds up.</p>
+            
+            <div class="pain-points">
+                <div class="pain-card">
+                    <div class="pain-icon">🔄</div>
+                    <h3>Constant Context Switching</h3>
+                    <p>You know your preferred tool but waste time navigating between tabs, bookmarks, and browser shortcuts.</p>
+                </div>
+                <div class="pain-card">
+                    <div class="pain-icon">🤔</div>
+                    <h3>Decision Paralysis</h3>
+                    <p>Unsure which engine handles your query best? You default to familiar options and miss better results.</p>
+                </div>
+                <div class="pain-card">
+                    <div class="pain-icon">😤</div>
+                    <h3>Suboptimal Results</h3>
+                    <p>Using Google for questions that need synthesis, or AI for simple lookups. Wrong tool, wasted time.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="how-it-works fade-in" id="how">
+            <span class="section-label">How It Works</span>
+            <h2 class="section-title">Three steps to smarter search</h2>
+            <p class="section-subtitle">SmartRouter handles the routing so you can focus on finding answers.</p>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Type</h3>
+                    <p>Enter your query in the SmartRouter omnibox. Just search like you normally would.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Route</h3>
+                    <p>Our lightweight classifier determines intent and sends you to the optimal destination instantly.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Learn</h3>
+                    <p>Override a decision? SmartRouter learns from your preference and adapts over time.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="features fade-in">
+            <span class="section-label">Features</span>
+            <h2 class="section-title">Built for how you actually search</h2>
+            <p class="section-subtitle">Thoughtfully designed to enhance your workflow without getting in the way.</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
+                    <h3>Automatic Query Routing</h3>
+                    <p>Semantic classification analyzes your query intent and routes to Google or Perplexity automatically. No shortcuts to memorize.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </div>
+                    <h3>One-Click Override</h3>
+                    <p>Wrong destination? The alternative opens in a background tab. Switch instantly without retyping your query.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 20V10"/>
+                            <path d="M18 20V4"/>
+                            <path d="M6 20v-4"/>
+                        </svg>
+                    </div>
+                    <h3>Adaptive Learning</h3>
+                    <p>Every override teaches SmartRouter your preferences. It gets better the more you use it—personalization without surveillance.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="9" y1="3" x2="9" y2="21"/>
+                        </svg>
+                    </div>
+                    <h3>Smart Tab Management</h3>
+                    <p>Background tabs auto-close after a delay. Keep your browser organized without lifting a finger.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats -->
+        <section class="stats fade-in">
+            <span class="section-label">Research-Backed</span>
+            <h2 class="section-title">Proven to reduce cognitive load</h2>
+            <p class="section-subtitle">Results from our user study with NASA-TLX cognitive assessments.</p>
+            
+            <div class="stats-grid">
+                <div class="stat">
+                    <div class="stat-value">90%</div>
+                    <div class="stat-label">Recommendation Trust Rate</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">39%</div>
+                    <div class="stat-label">Reduction in Perceived Effort</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">6/7</div>
+                    <div class="stat-label">NASA-TLX Dimensions Improved</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Waitlist CTA -->
+        <section class="waitlist" id="waitlist">
+            <div class="waitlist-box">
+                <h2>Get Early Access</h2>
+                <p>Be the first to try SmartRouter when we launch. Join the waitlist for exclusive early access.</p>
+                <form class="waitlist-form" id="waitlistForm" onsubmit="handleSubmit(event)">
+                    <input type="email" name="email" placeholder="Enter your email" required>
+                    <button type="submit" id="submitBtn">Join Waitlist</button>
+                </form>
+                <p class="form-note">No spam. We'll only email you when we launch.</p>
+                <div class="success-message" id="successMessage">
+                    🎉 You're on the list! We'll notify you when SmartRouter is ready.
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">SmartRouter</div>
+            <p class="footer-team">
+                Built by <a href="mailto:nikil.senthil.kumar.gr@dartmouth.edu">Nikil Kumar</a>, 
+                <a href="mailto:syed.ali.haider.gr@dartmouth.edu">Syed Ali Haider</a> & 
+                <a href="mailto:forrest.leung.gr@dartmouth.edu">Forrest Leung</a>
+            </p>
+            <p class="footer-school">Dartmouth College • COSC 89.25 HCI Research</p>
+        </div>
+    </footer>
+
+    <script>
+        // Typing animation for hero
+        const queries = [
+            { text: "What are the health benefits of intermittent fasting?", dest: "Perplexity", icon: "P", class: "route-perplexity" },
+            { text: "amazon", dest: "Google", icon: "G", class: "route-google" },
+            { text: "Explain quantum entanglement simply", dest: "Perplexity", icon: "P", class: "route-perplexity" },
+            { text: "weather nyc", dest: "Google", icon: "G", class: "route-google" },
+            { text: "Best practices for React state management 2024", dest: "Perplexity", icon: "P", class: "route-perplexity" }
+        ];
+        
+        let currentQuery = 0;
+        const searchText = document.getElementById('searchText');
+        const searchBox = document.getElementById('searchBox');
+        const cursor = document.getElementById('cursor');
+        const routingIndicator = document.getElementById('routingIndicator');
+        const routeIcon = document.getElementById('routeIcon');
+        const routeDestination = document.getElementById('routeDestination');
+        
+        async function typeQuery() {
+            const query = queries[currentQuery];
+            searchText.textContent = '';
+            cursor.style.display = 'inline-block';
+            searchBox.classList.add('active');
+            routingIndicator.classList.remove('visible');
+            
+            // Type the query
+            for (let i = 0; i < query.text.length; i++) {
+                searchText.textContent += query.text[i];
+                await sleep(40 + Math.random() * 30);
+            }
+            
+            await sleep(500);
+            cursor.style.display = 'none';
+            
+            // Show routing
+            routeIcon.textContent = query.icon;
+            routeIcon.className = 'route-icon ' + query.class;
+            routeDestination.textContent = query.dest;
+            routingIndicator.classList.add('visible');
+            
+            await sleep(3000);
+            
+            // Clear and move to next
+            searchBox.classList.remove('active');
+            currentQuery = (currentQuery + 1) % queries.length;
+            
+            await sleep(1000);
+            typeQuery();
+        }
+        
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+        
+        // Start typing animation
+        setTimeout(typeQuery, 1500);
+        
+        // Scroll functions
+        function scrollToWaitlist() {
+            document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function scrollToHow() {
+            document.getElementById('how').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Waitlist form submission to Google Sheets
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const email = form.email.value;
+            const submitBtn = document.getElementById('submitBtn');
+            const successMessage = document.getElementById('successMessage');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Joining...';
+            
+            // Google Sheets Web App URL - Replace with your deployed script URL
+            const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+            
+            try {
+                // Try to submit to Google Sheets
+                await fetch(GOOGLE_SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        timestamp: new Date().toISOString(),
+                        source: 'website'
+                    })
+                });
+                
+                // Show success regardless (no-cors doesn't return response)
+                form.style.display = 'none';
+                successMessage.classList.add('show');
+                
+                // Also store locally as backup
+                const waitlist = JSON.parse(localStorage.getItem('smartrouter_waitlist') || '[]');
+                waitlist.push({ email, timestamp: new Date().toISOString() });
+                localStorage.setItem('smartrouter_waitlist', JSON.stringify(waitlist));
+                
+            } catch (error) {
+                console.error('Error:', error);
+                // Still show success and store locally
+                form.style.display = 'none';
+                successMessage.classList.add('show');
+                
+                const waitlist = JSON.parse(localStorage.getItem('smartrouter_waitlist') || '[]');
+                waitlist.push({ email, timestamp: new Date().toISOString() });
+                localStorage.setItem('smartrouter_waitlist', JSON.stringify(waitlist));
+            }
+        }
+        
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.fade-in').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
+
